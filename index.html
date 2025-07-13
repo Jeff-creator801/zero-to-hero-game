@@ -1,1 +1,1150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Empire</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --primary: #0088cc;
+            --premium: #f1c40f;
+            --energy: #f39c12;
+            --gamma: #3498db;
+            --ton: #9b59b6;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+            position: relative;
+        }
+        
+        .top-buttons {
+            position: fixed;
+            top: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+        
+        .round-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: none;
+        }
+        
+        .energy-wheel {
+            background-color: var(--energy);
+            color: white;
+        }
+        
+        .luck-wheel {
+            background-color: var(--ton);
+            color: white;
+        }
+        
+        .premium-btn {
+            background-color: var(--premium);
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 70px 10px 80px;
+            box-sizing: border-box;
+        }
+        
+        .balance-container {
+            display: flex;
+            justify-content: space-around;
+            background-color: white;
+            padding: 15px 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .balance-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .balance-icon {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .balance-value {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        #energy { color: var(--energy); }
+        #gamma { color: var(--gamma); }
+        #ton { color: var(--ton); }
+        
+        .content {
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 200px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .nav-bar {
+            display: flex;
+            justify-content: space-around;
+            background-color: white;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-button {
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.3s;
+        }
+        
+        .nav-button.active {
+            color: var(--primary);
+            transform: translateY(-5px);
+        }
+        
+        .nav-button .icon {
+            font-size: 24px;
+            margin-bottom: 3px;
+        }
+        
+        .nav-button .label {
+            font-size: 12px;
+        }
+        
+        .building {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fafafa;
+            transition: all 0.3s;
+        }
+        
+        .building:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .building-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .building-name {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .building-price {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .building-income {
+            color: #27ae60;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .building-level {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .level-btn {
+            width: 23%;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .level-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .level-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .buy-btn {
+            background: linear-gradient(135deg, var(--primary), #00c8ff);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .buy-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .premium-badge {
+            background-color: var(--premium);
+            color: #333;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+        
+        .city-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .city-cell {
+            aspect-ratio: 1/1;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .wheel-container {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .wheel-result {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+        }
+        
+        .spin-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        
+        .exchange-form {
+            margin-top: 15px;
+        }
+        
+        .exchange-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .exchange-btn {
+            background: linear-gradient(135deg, var(--gamma), #3498db);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .premium-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .premium-option {
+            width: 48%;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid var(--premium);
+        }
+        
+        .premium-option:hover {
+            background-color: rgba(241, 196, 15, 0.1);
+        }
+        
+        .premium-title {
+            font-weight: bold;
+            color: var(--premium);
+            margin-bottom: 5px;
+        }
+        
+        .premium-price {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .withdraw-info {
+            font-size: 12px;
+            color: #777;
+            margin-top: 10px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: fadeInOut 2.5s;
+            display: none;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; top: 10px; }
+            10% { opacity: 1; top: 20px; }
+            90% { opacity: 1; top: 20px; }
+            100% { opacity: 0; top: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    
+    <div class="top-buttons">
+        <div>
+            <button class="round-btn energy-wheel" onclick="showSection('energy-wheel')">⚡</button>
+            <button class="round-btn luck-wheel" onclick="showSection('luck-wheel')">🍀</button>
+        </div>
+        <button class="round-btn premium-btn" onclick="showPremiumModal()">💎</button>
+    </div>
+    
+    <div class="container">
+        <div class="balance-container">
+            <div class="balance-item">
+                <div class="balance-icon">⚡</div>
+                <div>Энергия</div>
+                <div class="balance-value" id="energy">0</div>
+            </div>
+            <div class="balance-item">
+                <div class="balance-icon">Γ</div>
+                <div>Gamma Coin</div>
+                <div class="balance-value" id="gamma">0</div>
+            </div>
+            <div class="balance-item">
+                <div class="balance-icon">💎</div>
+                <div>TON</div>
+                <div class="balance-value" id="ton">0</div>
+            </div>
+        </div>
+        
+        <div class="content" id="content">
+            <h2 id="content-title">🏙️ Ваш город</h2>
+            <div id="content-text">
+                <p>Ваши здания автоматически генерируют энергию</p>
+                <div class="city-grid" id="city-grid"></div>
+                <div id="city-stats"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="nav-bar">
+        <div class="nav-button" id="events-btn" onclick="showSection('events')">
+            <div class="icon">🎲</div>
+            <div class="label">Ивенты</div>
+        </div>
+        <div class="nav-button" id="shop-btn" onclick="showSection('shop')">
+            <div class="icon">🛒</div>
+            <div class="label">Магазин</div>
+        </div>
+        <div class="nav-button active" id="city-btn" onclick="showSection('city')">
+            <div class="icon">🏙️</div>
+            <div class="label">Город</div>
+        </div>
+        <div class="nav-button" id="leaderboard-btn" onclick="showSection('leaderboard')">
+            <div class="icon">🏆</div>
+            <div class="label">Лидеры</div>
+        </div>
+        <div class="nav-button" id="exchange-btn" onclick="showSection('exchange')">
+            <div class="icon">💱</div>
+            <div class="label">Обмен</div>
+        </div>
+    </div>
 
+    <!-- Премиум модальное окно -->
+    <div id="premium-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px;">
+            <h2 style="text-align: center; color: var(--premium);">Premium Статус</h2>
+            <div class="premium-options">
+                <div class="premium-option" onclick="buyPremium('monthly')">
+                    <div class="premium-title">Premium на месяц</div>
+                    <div class="premium-price">5 💎</div>
+                    <div>Доступ к эксклюзивным зданиям</div>
+                </div>
+                <div class="premium-option" onclick="buyPremium('lifetime')">
+                    <div class="premium-title">Premium навсегда</div>
+                    <div class="premium-price">30 💎</div>
+                    <div>Вечный доступ ко всем функциям</div>
+                </div>
+            </div>
+            <button onclick="document.getElementById('premium-modal').style.display='none'" style="margin-top: 20px; width: 100%; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer;">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+        
+        // Состояние игры
+        let gameState = {
+            balance: {
+                energy: 0,
+                gamma: 0,
+                ton: 0
+            },
+            buildings: {
+                solar: { level: 1, count: 0 },
+                wind: { level: 1, count: 0 },
+                water: { level: 1, count: 0 },
+                nuclear: { level: 1, count: 0 }
+            },
+            premium: {
+                active: false,
+                type: null, // 'monthly' или 'lifetime'
+                expiry: null // для месячной подписки
+            },
+            lastUpdate: Date.now(),
+            lastEnergySpin: 0,
+            lastLuckSpin: 0,
+            depositHistory: [],
+            withdrawHistory: []
+        };
+        
+        // Данные о зданиях
+        const buildingsData = {
+            solar: {
+                name: "Солнечная батарея",
+                emoji: "☀️",
+                levels: {
+                    1: { price: 7, income: 700 },
+                    2: { price: 10, income: 1000 },
+                    3: { price: 37, income: 2100 },
+                    4: { price: 54, income: 4400 },
+                    5: { price: 107, income: 5700 }
+                }
+            },
+            wind: {
+                name: "Воздушная батарея",
+                emoji: "🌬️",
+                levels: {
+                    1: { price: 21, income: 2100 },
+                    2: { price: 58, income: 4400 },
+                    3: { price: 127, income: 5700 },
+                    4: { price: 256, income: 9600 },
+                    5: { price: 448, income: 17300 }
+                }
+            },
+            water: {
+                name: "Водная батарея",
+                emoji: "🌊",
+                levels: {
+                    1: { price: 76, income: 5700 },
+                    2: { price: 148, income: 9600 },
+                    3: { price: 272, income: 17300 },
+                    4: { price: 437, income: 26700 },
+                    5: { price: 821, income: 48400 }
+                }
+            },
+            nuclear: {
+                name: "Ядерный реактор",
+                emoji: "☢️",
+                premium: true,
+                levels: {
+                    1: { price: 150, income: 15000 },
+                    2: { price: 300, income: 30000 },
+                    3: { price: 600, income: 60000 },
+                    4: { price: 1200, income: 120000 },
+                    5: { price: 2400, income: 240000 }
+                }
+            }
+        };
+        
+        // Курсы обмена
+        const exchangeRates = {
+            energyToGamma: 10000,
+            gammaToTon: 10000000,
+            tonToGamma: 2000000 // 1 TON = 2 000 000 Gamma (из ваших данных: 5 TON = 10 000 000 Gamma)
+        };
+        
+        // Уведомления
+        function showNotification(text) {
+            const notif = document.getElementById('notification');
+            notif.textContent = text;
+            notif.style.display = 'block';
+            setTimeout(() => {
+                notif.style.display = 'none';
+            }, 2500);
+        }
+        
+        // Обновление баланса
+        function updateBalance() {
+            document.getElementById('energy').textContent = Math.floor(gameState.balance.energy).toLocaleString();
+            document.getElementById('gamma').textContent = Math.floor(gameState.balance.gamma).toLocaleString();
+            document.getElementById('ton').textContent = Math.floor(gameState.balance.ton).toLocaleString();
+        }
+        
+        // Расчет дохода
+        function calculateIncome() {
+            const now = Date.now();
+            const hoursPassed = (now - gameState.lastUpdate) / 1000 / 3600;
+            
+            let incomePerHour = 0;
+            for (const [type, building] of Object.entries(gameState.buildings)) {
+                if (buildingsData[type] && building.count > 0) {
+                    const levelData = buildingsData[type].levels[building.level];
+                    incomePerHour += building.count * levelData.income;
+                }
+            }
+            
+            const earnedEnergy = incomePerHour * hoursPassed;
+            gameState.balance.energy += earnedEnergy;
+            gameState.lastUpdate = now;
+            
+            if (earnedEnergy > 0) {
+                showNotification(`+${Math.floor(earnedEnergy)} ⚡ (${Math.floor(incomePerHour)}/час)`);
+            }
+            
+            return earnedEnergy;
+        }
+        
+        // Покупка здания
+        function buyBuilding(type) {
+            const building = buildingsData[type];
+            const currentLevel = gameState.buildings[type].level;
+            const levelData = building.levels[currentLevel];
+            
+            if (building.premium && !gameState.premium.active) {
+                showNotification("Требуется Premium статус!");
+                return;
+            }
+            
+            if (gameState.balance.gamma >= levelData.price) {
+                gameState.balance.gamma -= levelData.price;
+                gameState.buildings[type].count += 1;
+                
+                updateBalance();
+                showSection('shop');
+                showNotification(`Куплено: ${building.name} (Ур. ${currentLevel})`);
+                
+                // Вибрация на поддерживаемых устройствах
+                if (navigator.vibrate) navigator.vibrate(50);
+            } else {
+                showNotification("Недостаточно Gamma Coin!");
+            }
+        }
+        
+        // Улучшение здания
+        function upgradeBuilding(type) {
+            const building = buildingsData[type];
+            const currentLevel = gameState.buildings[type].level;
+            
+            if (currentLevel >= 5) {
+                showNotification("Максимальный уровень достигнут!");
+                return;
+            }
+            
+            const nextLevel = currentLevel + 1;
+            const nextLevelData = building.levels[nextLevel];
+            
+            if (gameState.balance.gamma >= nextLevelData.price) {
+                gameState.balance.gamma -= nextLevelData.price;
+                gameState.buildings[type].level = nextLevel;
+                
+                updateBalance();
+                showSection('shop');
+                showNotification(`Улучшено: ${building.name} до ур. ${nextLevel}`);
+                
+                if (navigator.vibrate) navigator.vibrate(50);
+            } else {
+                showNotification("Недостаточно Gamma Coin для улучшения!");
+            }
+        }
+        
+        // Покупка премиума
+        function buyPremium(type) {
+            let price = 0;
+            let successMessage = "";
+            
+            if (type === 'monthly') {
+                price = 5;
+                successMessage = "Premium на месяц активирован!";
+            } else if (type === 'lifetime') {
+                price = 30;
+                successMessage = "Premium навсегда активирован!";
+            }
+            
+            if (gameState.balance.ton >= price) {
+                gameState.balance.ton -= price;
+                gameState.premium.active = true;
+                gameState.premium.type = type;
+                
+                if (type === 'monthly') {
+                    const expiryDate = new Date();
+                    expiryDate.setMonth(expiryDate.getMonth() + 1);
+                    gameState.premium.expiry = expiryDate.getTime();
+                }
+                
+                updateBalance();
+                document.getElementById('premium-modal').style.display = 'none';
+                showNotification(successMessage);
+                
+                if (navigator.vibrate) navigator.vibrate(100);
+            } else {
+                showNotification("Недостаточно TON!");
+            }
+        }
+        
+        // Обмен валют
+        function exchangeCurrency(from, to, amount) {
+            let rate = 0;
+            let fromBalance = 0;
+            let toBalance = 0;
+            
+            if (from === 'energy' && to === 'gamma') {
+                rate = 1 / exchangeRates.energyToGamma;
+                fromBalance = 'energy';
+                toBalance = 'gamma';
+            } else if (from === 'gamma' && to === 'ton') {
+                rate = 1 / exchangeRates.gammaToTon;
+                fromBalance = 'gamma';
+                toBalance = 'ton';
+            } else if (from === 'ton' && to === 'gamma') {
+                rate = exchangeRates.tonToGamma;
+                fromBalance = 'ton';
+                toBalance = 'gamma';
+            }
+            
+            if (gameState.balance[fromBalance] >= amount) {
+                gameState.balance[fromBalance] -= amount;
+                gameState.balance[toBalance] += amount * rate;
+                
+                updateBalance();
+                showNotification(`Обменено: ${amount} ${from} → ${amount * rate} ${to}`);
+            } else {
+                showNotification(`Недостаточно ${from}!`);
+            }
+        }
+        
+        // Рулетка энергии
+        function spinEnergyWheel() {
+            const now = Date.now();
+            const lastSpin = gameState.lastEnergySpin;
+            const cooldown = 24 * 60 * 60 * 1000; // 24 часа
+            
+            if (now - lastSpin < cooldown) {
+                const remaining = cooldown - (now - lastSpin);
+                const hours = Math.floor(remaining / (60 * 60 * 1000));
+                const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+                showNotification(`Подождите еще ${hours}ч ${minutes}м до следующего вращения!`);
+                return;
+            }
+            
+            const reward = Math.floor(Math.random() * 1901) + 100; // 100-2000
+            gameState.balance.energy += reward;
+            gameState.lastEnergySpin = now;
+            
+            updateBalance();
+            document.getElementById('energy-wheel-result').textContent = `Вы выиграли: ${reward} ⚡`;
+            showNotification(`Рулетка: +${reward} ⚡`);
+            
+            if (navigator.vibrate) navigator.vibrate(200);
+        }
+        
+        // Рулетка удачи
+        function spinLuckWheel() {
+            if (gameState.balance.ton < 1) {
+                showNotification("Нужно минимум 1 TON для вращения!");
+                return;
+            }
+            
+            gameState.balance.ton -= 1;
+            const reward = (Math.floor(Math.random() * 46) + 5) / 10; // 0.5-5.0
+            gameState.balance.ton += reward;
+            
+            updateBalance();
+            document.getElementById('luck-wheel-result').textContent = `Вы выиграли: ${reward.toFixed(1)} 💎`;
+            showNotification(`Рулетка: ${reward.toFixed(1)} TON`);
+            
+            if (navigator.vibrate) navigator.vibrate(200);
+        }
+        
+        // Пополнение баланса (имитация)
+        function depositTon(amount) {
+            if (amount < 1 || amount > 100) {
+                showNotification("Сумма должна быть от 1 до 100 TON");
+                return;
+            }
+            
+            gameState.balance.ton += amount;
+            gameState.depositHistory.push({
+                amount: amount,
+                date: new Date().toISOString()
+            });
+            
+            updateBalance();
+            showNotification(`Пополнено: ${amount} TON`);
+        }
+        
+        // Вывод средств (имитация)
+        function withdrawTon(amount) {
+            if (gameState.depositHistory.length === 0) {
+                showNotification("Нужно хотя бы одно пополнение для вывода");
+                return;
+            }
+            
+            const firstDepositDate = new Date(gameState.depositHistory[0].date);
+            const now = new Date();
+            const daysPassed = (now - firstDepositDate) / (1000 * 60 * 60 * 24);
+            
+            if (daysPassed < 100) {
+                const remaining = Math.ceil(100 - daysPassed);
+                showNotification(`Вывод возможен через ${remaining} дней`);
+                return;
+            }
+            
+            if (gameState.balance.ton < amount) {
+                showNotification("Недостаточно TON для вывода");
+                return;
+            }
+            
+            gameState.balance.ton -= amount;
+            gameState.withdrawHistory.push({
+                amount: amount,
+                date: new Date().toISOString()
+            });
+            
+            updateBalance();
+            showNotification(`Выведено: ${amount} TON`);
+        }
+        
+        // Показать премиум модальное окно
+        function showPremiumModal() {
+            document.getElementById('premium-modal').style.display = 'flex';
+        }
+        
+        // Показать магазин
+        function showShop() {
+            calculateIncome();
+            updateBalance();
+            
+            let shopHTML = '<h2>🛒 Магазин зданий</h2>';
+            shopHTML += '<p>Покупайте здания для автоматического заработка энергии</p>';
+            
+            for (const [key, building] of Object.entries(buildingsData)) {
+                const currentLevel = gameState.buildings[key].level;
+                const levelData = building.levels[currentLevel];
+                const canAfford = gameState.balance.gamma >= levelData.price;
+                const isPremiumLocked = building.premium && !gameState.premium.active;
+                
+                shopHTML += `
+                <div class="building">
+                    <div class="building-header">
+                        <span class="building-name">${building.emoji} ${building.name}
+                            ${building.premium ? '<span class="premium-badge">PREMIUM</span>' : ''}
+                        </span>
+                        <span class="building-price">${levelData.price} Γ</span>
+                    </div>
+                    <div class="building-income">Доход: ${levelData.income} ⚡/час (Ур. ${currentLevel})</div>
+                    
+                    <div class="building-level">
+                        <button class="level-btn ${currentLevel === 1 ? 'active' : ''}">1</button>
+                        <button class="level-btn ${currentLevel === 2 ? 'active' : ''}">2</button>
+                        <button class="level-btn ${currentLevel === 3 ? 'active' : ''}">3</button>
+                        <button class="level-btn ${currentLevel === 4 ? 'active' : ''}">4</button>
+                        <button class="level-btn ${currentLevel === 5 ? 'active' : ''}">5</button>
+                    </div>
+                    
+                    <button class="buy-btn" 
+                            onclick="buyBuilding('${key}')" 
+                            ${!canAfford || isPremiumLocked ? 'disabled' : ''}>
+                        Купить (${levelData.price} Γ)
+                    </button>
+                    
+                    ${currentLevel < 5 ? `
+                    <button class="buy-btn" 
+                            onclick="upgradeBuilding('${key}')" 
+                            style="margin-top: 10px; background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                        Улучшить до ур. ${currentLevel + 1} (${building.levels[currentLevel + 1].price} Γ)
+                    </button>
+                    ` : ''}
+                </div>
+                `;
+            }
+            
+            document.getElementById('content-title').textContent = 'Магазин';
+            document.getElementById('content-text').innerHTML = shopHTML;
+        }
+        
+        // Показать город
+        function showCity() {
+            calculateIncome();
+            updateBalance();
+            
+            // Обновляем сетку города
+            let cityGridHTML = '';
+            const totalBuildings = Object.values(gameState.buildings).reduce((sum, b) => sum + b.count, 0);
+            
+            if (totalBuildings === 0) {
+                cityGridHTML = '<p style="grid-column: 1 / -1; text-align: center;">Пока нет зданий. Купите их в магазине!</p>';
+            } else {
+                for (let i = 0; i < 9; i++) {
+                    let cellContent = '';
+                    let buildingType = '';
+                    
+                    // Распределяем здания по клеткам
+                    if (i < gameState.buildings.solar.count) {
+                        cellContent = buildingsData.solar.emoji;
+                        buildingType = 'solar';
+                    } else if (i < gameState.buildings.solar.count + gameState.buildings.wind.count) {
+                        cellContent = buildingsData.wind.emoji;
+                        buildingType = 'wind';
+                    } else if (i < gameState.buildings.solar.count + gameState.buildings.wind.count + gameState.buildings.water.count) {
+                        cellContent = buildingsData.water.emoji;
+                        buildingType = 'water';
+                    } else if (i < gameState.buildings.solar.count + gameState.buildings.wind.count + gameState.buildings.water.count + gameState.buildings.nuclear.count) {
+                        cellContent = buildingsData.nuclear.emoji;
+                        buildingType = 'nuclear';
+                    }
+                    
+                    if (buildingType) {
+                        const level = gameState.buildings[buildingType].level;
+                        cityGridHTML += `<div class="city-cell" title="${buildingsData[buildingType].name} (Ур. ${level})">${cellContent}<small style="font-size: 10px;">${level}</small></div>`;
+                    } else {
+                        cityGridHTML += '<div class="city-cell"></div>';
+                    }
+                }
+            }
+            
+            // Статистика города
+            let totalIncome = 0;
+            let buildingsList = '';
+            
+            for (const [type, building] of Object.entries(gameState.buildings)) {
+                if (building.count > 0 && buildingsData[type]) {
+                    const levelData = buildingsData[type].levels[building.level];
+                    const buildingIncome = building.count * levelData.income;
+                    totalIncome += buildingIncome;
+                    
+                    buildingsList += `
+                        <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                            <strong>${buildingsData[type].emoji} ${buildingsData[type].name}:</strong> 
+                            ${building.count} шт. (Ур. ${building.level})<br>
+                            <small>Доход: ${buildingIncome} ⚡/час</small>
+                        </div>
+                    `;
+                }
+            }
+            
+            if (buildingsList === '') {
+                buildingsList = '<p>У вас пока нет зданий. Посетите магазин!</p>';
+            } else {
+                buildingsList += `<p style="margin-top: 15px;"><strong>Общий доход:</strong> ${totalIncome} ⚡/час</p>`;
+            }
+            
+            document.getElementById('content-title').textContent = '🏙️ Ваш город';
+            document.getElementById('city-grid').innerHTML = cityGridHTML;
+            document.getElementById('city-stats').innerHTML = buildingsList;
+        }
+        
+        // Показать рулетку энергии
+        function showEnergyWheel() {
+            const now = Date.now();
+            const lastSpin = gameState.lastEnergySpin;
+            const cooldown = 24 * 60 * 60 * 1000; // 24 часа
+            let cooldownText = '';
+            
+            if (now - lastSpin < cooldown) {
+                const remaining = cooldown - (now - lastSpin);
+                const hours = Math.floor(remaining / (60 * 60 * 1000));
+                const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+                cooldownText = `<p>Следующее вращение через: ${hours}ч ${minutes}м</p>`;
+            }
+            
+            const wheelHTML = `
+                <div class="wheel-container">
+                    <h2>⚡ Рулетка энергии</h2>
+                    <p>Крутите раз в 24 часа и получайте от 100 до 2000 энергии!</p>
+                    ${cooldownText}
+                    <div class="wheel-result" id="energy-wheel-result"></div>
+                    <button class="spin-btn" onclick="spinEnergyWheel()">Крутить</button>
+                </div>
+            `;
+            
+            document.getElementById('content-title').textContent = '⚡ Рулетка энергии';
+            document.getElementById('content-text').innerHTML = wheelHTML;
+        }
+        
+        // Показать рулетку удачи
+        function showLuckWheel() {
+            const wheelHTML = `
+                <div class="wheel-container">
+                    <h2>🍀 Рулетка удачи</h2>
+                    <p>Крутите за 1 TON и получайте от 0.5 до 5 TON!</p>
+                    <div class="wheel-result" id="luck-wheel-result"></div>
+                    <button class="spin-btn" onclick="spinLuckWheel()">Крутить (1 💎)</button>
+                </div>
+            `;
+            
+            document.getElementById('content-title').textContent = '🍀 Рулетка удачи';
+            document.getElementById('content-text').innerHTML = wheelHTML;
+        }
+        
+        // Показать обмен
+        function showExchange() {
+            calculateIncome();
+            updateBalance();
+            
+            const exchangeHTML = `
+                <h2>💱 Обмен валют</h2>
+                <p>Обменивайте одну валюту на другую</p>
+                
+                <div class="exchange-form">
+                    <h3>Обменять</h3>
+                    <input type="number" id="exchange-amount" class="exchange-input" placeholder="Количество">
+                    <select id="exchange-from" class="exchange-input">
+                        <option value="energy">⚡ Энергия</option>
+                        <option value="gamma">Γ Gamma Coin</option>
+                        <option value="ton">💎 TON</option>
+                    </select>
+                    <p>→</p>
+                    <select id="exchange-to" class="exchange-input">
+                        <option value="gamma">Γ Gamma Coin</option>
+                        <option value="ton">💎 TON</option>
+                        <option value="energy">⚡ Энергия</option>
+                    </select>
+                    <button class="exchange-btn" onclick="processExchange()">Обменять</button>
+                </div>
+                
+                <div class="exchange-form" style="margin-top: 30px;">
+                    <h3>Пополнение баланса</h3>
+                    <input type="number" id="deposit-amount" class="exchange-input" placeholder="Количество TON (1-100)">
+                    <button class="exchange-btn" onclick="processDeposit()" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">Пополнить</button>
+                </div>
+                
+                <div class="exchange-form" style="margin-top: 30px;">
+                    <h3>Вывод средств</h3>
+                    <input type="number" id="withdraw-amount" class="exchange-input" placeholder="Количество TON">
+                    <button class="exchange-btn" onclick="processWithdraw()" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">Вывести</button>
+                    <p class="withdraw-info">Вывод возможен только через 100 дней после первого пополнения</p>
+                </div>
+            `;
+            
+            document.getElementById('content-title').textContent = '💱 Обмен';
+            document.getElementById('content-text').innerHTML = exchangeHTML;
+        }
+        
+        // Обработка обмена
+        function processExchange() {
+            const from = document.getElementById('exchange-from').value;
+            const to = document.getElementById('exchange-to').value;
+            const amount = parseFloat(document.getElementById('exchange-amount').value);
+            
+            if (isNaN(amount) {
+                showNotification("Введите корректное количество");
+                return;
+            }
+            
+            if (from === to) {
+                showNotification("Нельзя обменивать одинаковые валюты");
+                return;
+            }
+            
+            // Проверяем допустимые комбинации обмена
+            if ((from === 'energy' && to === 'gamma') ||
+                (from === 'gamma' && to === 'ton') ||
+                (from === 'ton' && to === 'gamma')) {
+                exchangeCurrency(from, to, amount);
+            } else {
+                showNotification("Такой обмен невозможен");
+            }
+        }
+        
+        // Обработка пополнения
+        function processDeposit() {
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
+            depositTon(amount);
+        }
+        
+        // Обработка вывода
+        function processWithdraw() {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            withdrawTon(amount);
+        }
+        
+        // Показать выбранный раздел
+        function showSection(section) {
+            // Удаляем класс active у всех кнопок
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Добавляем класс active к выбранной кнопке (если это не рулетка)
+            if (section !== 'energy-wheel' && section !== 'luck-wheel') {
+                document.getElementById(`${section}-btn`).classList.add('active');
+            }
+            
+            // Обновляем контент в зависимости от выбранного раздела
+            switch(section) {
+                case 'events':
+                    document.getElementById('content-title').textContent = '🎲 Ивенты';
+                    document.getElementById('content-text').innerHTML = `
+                        <h3>Текущие события</h3>
+                        <div style="background: #fff8e1; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                            <strong>Новых ивентов пока нет</strong>
+                            <p>Проверяйте регулярно, чтобы не пропустить бонусы!</p>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'shop':
+                    showShop();
+                    break;
+                    
+                case 'city':
+                    showCity();
+                    break;
+                    
+                case 'leaderboard':
+                    document.getElementById('content-title').textContent = '🏆 Лидерборд';
+                    document.getElementById('content-text').innerHTML = `
+                        <h3>Топ-5 игроков</h3>
+                        <ol style="padding-left: 20px;">
+                            <li>Игрок1 - 1,250,000 ⚡</li>
+                            <li>Игрок2 - 1,100,000 ⚡</li>
+                            <li>Игрок3 - 900,000 ⚡</li>
+                            <li>Игрок4 - 750,000 ⚡</li>
+                            <li>Игрок5 - 500,000 ⚡</li>
+                        </ol>
+                        <p style="margin-top: 15px; color: #3498db;">
+                            <strong>Ваша позиция:</strong> 15 место
+                        </p>
+                    `;
+                    break;
+                    
+                case 'exchange':
+                    showExchange();
+                    break;
+                    
+                case 'energy-wheel':
+                    showEnergyWheel();
+                    break;
+                    
+                case 'luck-wheel':
+                    showLuckWheel();
+                    break;
+            }
+        }
+        
+        // Инициализация игры
+        function initGame() {
+            // Загрузка сохранений
+            const savedState = localStorage.getItem('energyEmpireSave');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    gameState = {
+                        ...gameState,
+                        ...parsed,
+                        lastUpdate: Date.now() // Сбрасываем таймер при загрузке
+                    };
+                    
+                    // Проверяем срок действия премиума
+                    if (gameState.premium.type === 'monthly' && gameState.premium.expiry < Date.now()) {
+                        gameState.premium.active = false;
+                        gameState.premium.type = null;
+                        gameState.premium.expiry = null;
+                    }
+                } catch (e) {
+                    console.error("Ошибка загрузки сохранения", e);
+                }
+            }
+            
+            // Проверка премиум статуса из Telegram
+            if (tg.initDataUnsafe?.user?.is_premium) {
+                gameState.premium.active = true;
+                gameState.premium.type = 'telegram';
+            }
+            
+            updateBalance();
+            showSection('city');
+            
+            // Автосохранение каждые 30 секунд
+            setInterval(() => {
+                calculateIncome();
+                localStorage.setItem('energyEmpireSave', JSON.stringify(gameState));
+            }, 30000);
+            
+            // Обновление баланса каждую секунду
+            setInterval(() => {
+                calculateIncome();
+                updateBalance();
+            }, 1000);
+        }
+        
+        // Запуск игры при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
