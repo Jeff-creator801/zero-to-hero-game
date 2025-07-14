@@ -1,1 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Empire</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Основные стили */
+        :root {
+            --primary: #0088cc;
+            --energy: #f39c12;
+            --gamma: #3498db;
+            --ton: #9b59b6;
+            --premium: #f1c40f;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            padding: 80px 15px 100px;
+            min-height: 100vh;
+        }
+        
+        /* Круглые кнопки на панели */
+        .round-nav-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .round-nav-container {
+            display: flex;
+            background: white;
+            border-radius: 50px;
+            padding: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .round-nav-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+            background: #f0f0f0;
+        }
+        
+        .round-nav-button.active {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-10px) scale(1.1);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* Контентные разделы */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Карточки */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        
+        /* Магазин - здания */
+        .building {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .building:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .building-icon {
+            font-size: 30px;
+            margin-right: 15px;
+            width: 50px;
+            text-align: center;
+        }
+        
+        .building-info {
+            flex: 1;
+        }
+        
+        .building-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .building-price {
+            color: var(--gamma);
+            font-weight: bold;
+        }
+        
+        .buy-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .buy-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Баланс */
+        .balance-container {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        
+        .balance-item {
+            text-align: center;
+        }
+        
+        .balance-value {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        #energy { color: var(--energy); }
+        #gamma { color: var(--gamma); }
+        #ton { color: var(--ton); }
+        
+        /* Анимации */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .bounce {
+            animation: bounce 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Баланс -->
+    <div class="balance-container">
+        <div class="balance-item">
+            <div>⚡ Энергия</div>
+            <div class="balance-value" id="energy">0</div>
+        </div>
+        <div class="balance-item">
+            <div>Γ Gamma</div>
+            <div class="balance-value" id="gamma">0</div>
+        </div>
+        <div class="balance-item">
+            <div>💎 TON</div>
+            <div class="balance-value" id="ton">0</div>
+        </div>
+    </div>
+    
+    <!-- Контентные разделы -->
+    <div class="container">
+        <!-- Ивенты -->
+        <div id="events" class="content-section">
+            <div class="card">
+                <h2>🎲 Ивенты</h2>
+                <p>Специальные события и акции</p>
+            </div>
+        </div>
+        
+        <!-- Магазин -->
+        <div id="shop" class="content-section">
+            <div class="card">
+                <h2>🛒 Магазин</h2>
+                <p>Покупайте здания для генерации энергии</p>
+                
+                <div id="buildings-list">
+                    <!-- Здания будут добавлены через JS -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Город -->
+        <div id="city" class="content-section">
+            <div class="card">
+                <h2>🏙️ Город</h2>
+                <p>Ваши здания и производство</p>
+                <div id="city-buildings"></div>
+            </div>
+        </div>
+        
+        <!-- Лидерборд -->
+        <div id="leaderboard" class="content-section">
+            <div class="card">
+                <h2>🏆 Лидерборд</h2>
+                <p>Топ игроков</p>
+            </div>
+        </div>
+        
+        <!-- Обменник -->
+        <div id="exchange" class="content-section">
+            <div class="card">
+                <h2>💱 Обменник</h2>
+                <p>Обмен валют</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Круглая навигация -->
+    <div class="round-nav-bar">
+        <div class="round-nav-container">
+            <div class="round-nav-button" onclick="showSection('events')">🎲</div>
+            <div class="round-nav-button" onclick="showSection('shop')">🛒</div>
+            <div class="round-nav-button active" onclick="showSection('city')">🏙️</div>
+            <div class="round-nav-button" onclick="showSection('leaderboard')">🏆</div>
+            <div class="round-nav-button" onclick="showSection('exchange')">💱</div>
+        </div>
+    </div>
 
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Состояние игры
+        const gameState = {
+            balance: {
+                energy: 1000,
+                gamma: 500,
+                ton: 10
+            },
+            buildings: {
+                solar: 0,
+                wind: 0,
+                water: 0,
+                nuclear: 0
+            }
+        };
+        
+        // Данные о зданиях
+        const buildingsData = [
+            {
+                id: "solar",
+                name: "Солнечная станция",
+                emoji: "☀️",
+                price: 100,
+                income: 10
+            },
+            {
+                id: "wind",
+                name: "Ветряная станция",
+                emoji: "🌬️",
+                price: 300,
+                income: 30
+            },
+            {
+                id: "water",
+                name: "Водная станция",
+                emoji: "🌊",
+                price: 700,
+                income: 70
+            },
+            {
+                id: "nuclear",
+                name: "Атомная станция",
+                emoji: "☢️",
+                price: 1500,
+                income: 150,
+                premium: true
+            }
+        ];
+        
+        // Обновить баланс
+        function updateBalance() {
+            document.getElementById('energy').textContent = gameState.balance.energy;
+            document.getElementById('gamma').textContent = gameState.balance.gamma;
+            document.getElementById('ton').textContent = gameState.balance.ton;
+        }
+        
+        // Показать раздел
+        function showSection(sectionId) {
+            // Скрыть все разделы
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Показать выбранный раздел
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Обновить активную кнопку
+            document.querySelectorAll('.round-nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Найти и активировать соответствующую кнопку
+            const buttons = document.querySelectorAll('.round-nav-button');
+            const sectionOrder = ['events', 'shop', 'city', 'leaderboard', 'exchange'];
+            const buttonIndex = sectionOrder.indexOf(sectionId);
+            
+            if (buttonIndex >= 0 && buttons[buttonIndex]) {
+                buttons[buttonIndex].classList.add('active');
+            }
+            
+            // Прокрутить вверх
+            window.scrollTo(0, 0);
+        }
+        
+        // Купить здание
+        function buyBuilding(buildingId) {
+            const building = buildingsData.find(b => b.id === buildingId);
+            
+            if (!building) return;
+            
+            if (gameState.balance.gamma >= building.price) {
+                gameState.balance.gamma -= building.price;
+                gameState.buildings[buildingId]++;
+                updateBalance();
+                updateShop();
+                updateCity();
+                
+                alert(`Вы купили ${building.name}!`);
+            } else {
+                alert("Недостаточно Gamma Coin!");
+            }
+        }
+        
+        // Обновить магазин
+        function updateShop() {
+            const shopList = document.getElementById('buildings-list');
+            shopList.innerHTML = '';
+            
+            buildingsData.forEach(building => {
+                const canAfford = gameState.balance.gamma >= building.price;
+                const isPremiumLocked = building.premium && !gameState.premium;
+                
+                shopList.innerHTML += `
+                    <div class="building">
+                        <div class="building-icon">${building.emoji}</div>
+                        <div class="building-info">
+                            <div class="building-name">${building.name}</div>
+                            <div>Доход: ${building.income} ⚡/час</div>
+                        </div>
+                        <div>
+                            <div class="building-price">${building.price} Γ</div>
+                            <button class="buy-btn" 
+                                    onclick="buyBuilding('${building.id}')"
+                                    ${!canAfford || isPremiumLocked ? 'disabled' : ''}>
+                                Купить
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        // Обновить город
+        function updateCity() {
+            const cityBuildings = document.getElementById('city-buildings');
+            cityBuildings.innerHTML = '';
+            
+            let totalIncome = 0;
+            
+            for (const [id, count] of Object.entries(gameState.buildings)) {
+                if (count > 0) {
+                    const building = buildingsData.find(b => b.id === id);
+                    const income = count * building.income;
+                    totalIncome += income;
+                    
+                    cityBuildings.innerHTML += `
+                        <div style="margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                            ${building.emoji} ${building.name}: ${count} шт.
+                            <br><small>Доход: ${income} ⚡/час</small>
+                        </div>
+                    `;
+                }
+            }
+            
+            if (cityBuildings.innerHTML === '') {
+                cityBuildings.innerHTML = '<p>У вас пока нет зданий. Купите их в магазине!</p>';
+            } else {
+                cityBuildings.innerHTML += `<p style="margin-top: 10px;"><strong>Общий доход:</strong> ${totalIncome} ⚡/час</p>`;
+            }
+        }
+        
+        // Инициализация игры
+        function initGame() {
+            updateBalance();
+            updateShop();
+            updateCity();
+            showSection('city');
+            
+            // Автосохранение каждые 30 секунд
+            setInterval(() => {
+                localStorage.setItem('energyEmpireSave', JSON.stringify(gameState));
+            }, 30000);
+        }
+        
+        // Запуск при загрузке
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
