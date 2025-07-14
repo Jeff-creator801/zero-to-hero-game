@@ -1,1 +1,1008 @@
-
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Empire</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* CSS стили будут здесь */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        
+        .round-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .round-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .energy-display {
+            background: linear-gradient(135deg, #2c3e50, #4ca1af);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            animation: pulse 2s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { box-shadow: 0 0 10px rgba(76, 161, 175, 0.5); }
+            to { box-shadow: 0 0 20px rgba(76, 161, 175, 0.8); }
+        }
+        
+        .currency {
+            display: flex;
+            justify-content: space-around;
+            margin: 10px 0;
+        }
+        
+        .currency-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-around;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1e1e1e;
+            padding: 10px 0;
+            border-top: 1px solid #333;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            padding: 12px 0;
+            text-align: center;
+            flex: 1;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-btn.active {
+            color: #6e8efb;
+            font-weight: bold;
+        }
+        
+        .city-btn {
+            flex: 1.5;
+            background: linear-gradient(135deg, #4b6cb7, #182848);
+            border-radius: 10px;
+            margin: 0 5px;
+            color: white;
+        }
+        
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s;
+            margin-bottom: 70px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .building {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #6e8efb;
+            transition: transform 0.3s;
+        }
+        
+        .building:active {
+            transform: scale(0.98);
+        }
+        
+        .building-premium {
+            border-left: 4px solid #f39c12;
+            position: relative;
+        }
+        
+        .premium-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #f39c12;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-premium {
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+        }
+        
+        .roulette-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .roulette-wheel {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            background: conic-gradient(
+                #ff0000, #ff7f00, #ffff00, #00ff00, 
+                #0000ff, #4b0082, #9400d3, #ff0000
+            );
+            border-radius: 50%;
+            position: relative;
+            transition: transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+        
+        .roulette-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 20px solid #fff;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            align-items: center;
+        }
+        
+        .leaderboard-rank {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .exchange-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 5px;
+            color: white;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .premium-card {
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="round-btn" id="energyRouletteBtn">🎡</div>
+            <div class="round-btn" id="luckRouletteBtn">🍀</div>
+            <div class="round-btn btn-premium" id="premiumBtn">⭐</div>
+        </div>
+        
+        <div class="energy-display">
+            <h2 id="energyAmount">0</h2>
+            <p>Энергия</p>
+        </div>
+        
+        <div class="currency">
+            <div class="currency-item">
+                <span id="gammaAmount">0</span> Gamma
+            </div>
+            <div class="currency-item">
+                <span id="tonAmount">0</span> TON
+            </div>
+        </div>
+        
+        <!-- Основные экраны -->
+        <div id="cityScreen" class="screen active">
+            <h2>Ваш город</h2>
+            <div id="buildingsContainer"></div>
+        </div>
+        
+        <div id="shopScreen" class="screen">
+            <h2>Магазин</h2>
+            <div id="shopItemsContainer"></div>
+        </div>
+        
+        <div id="eventsScreen" class="screen">
+            <h2>Ивенты</h2>
+            <p>Скоро появятся новые ивенты!</p>
+        </div>
+        
+        <div id="leaderboardScreen" class="screen">
+            <h2>Лидерборд</h2>
+            <div id="leaderboardContainer"></div>
+        </div>
+        
+        <div id="exchangeScreen" class="screen">
+            <h2>Обмен</h2>
+            <div class="tab-buttons">
+                <div class="tab-btn active" data-tab="exchange">Обмен</div>
+                <div class="tab-btn" data-tab="deposit">Пополнение</div>
+                <div class="tab-btn" data-tab="withdraw">Вывод</div>
+            </div>
+            
+            <div class="tab-content active" id="exchangeTab">
+                <select class="exchange-input" id="exchangeFrom">
+                    <option value="energy">Энергия</option>
+                    <option value="gamma">Gamma Coin</option>
+                    <option value="ton">TON</option>
+                </select>
+                <input type="number" class="exchange-input" id="exchangeAmount" placeholder="Количество">
+                <select class="exchange-input" id="exchangeTo">
+                    <option value="gamma">Gamma Coin</option>
+                    <option value="ton">TON</option>
+                    <option value="energy">Энергия</option>
+                </select>
+                <button class="btn" id="exchangeBtn">Обменять</button>
+                <div id="exchangeResult"></div>
+            </div>
+            
+            <div class="tab-content" id="depositTab">
+                <input type="number" class="exchange-input" id="depositAmount" placeholder="Количество TON (1-100)">
+                <button class="btn" id="depositBtn">Пополнить</button>
+            </div>
+            
+            <div class="tab-content" id="withdrawTab">
+                <p>Вывод доступен через <span id="daysLeft">100</span> дней</p>
+                <input type="number" class="exchange-input" id="withdrawAmount" placeholder="Количество TON">
+                <input class="exchange-input" id="withdrawAddress" placeholder="TON кошелек">
+                <button class="btn" id="withdrawBtn" disabled>Вывести</button>
+            </div>
+        </div>
+        
+        <div id="premiumScreen" class="screen">
+            <h2>Премиум</h2>
+            <div class="premium-card">
+                <h3>Премиум на месяц</h3>
+                <p>Доступ к эксклюзивным зданиям</p>
+                <p>+20% к доходу</p>
+                <button class="btn btn-premium" id="buyPremiumMonth">Купить за 5 TON</button>
+            </div>
+            <div class="premium-card">
+                <h3>Премиум навсегда</h3>
+                <p>Доступ к эксклюзивным зданиям</p>
+                <p>+30% к доходу</p>
+                <button class="btn btn-premium" id="buyPremiumForever">Купить за 30 TON</button>
+            </div>
+        </div>
+        
+        <div id="energyRouletteScreen" class="screen">
+            <div class="roulette-container">
+                <h2>Рулетка энергии</h2>
+                <p>Крутите раз в сутки и получайте от 100 до 2000 энергии!</p>
+                <div class="roulette-wheel" id="energyWheel">
+                    <div class="roulette-pointer"></div>
+                </div>
+                <button class="btn" id="spinEnergyBtn">Крутить</button>
+                <div id="energyRouletteResult"></div>
+            </div>
+        </div>
+        
+        <div id="luckRouletteScreen" class="screen">
+            <div class="roulette-container">
+                <h2>Рулетка удачи</h2>
+                <p>Крутите за 1 TON и получайте от 0.5 до 5 TON!</p>
+                <div class="roulette-wheel" id="luckWheel">
+                    <div class="roulette-pointer"></div>
+                </div>
+                <button class="btn" id="spinLuckBtn">Крутить за 1 TON</button>
+                <div id="luckRouletteResult"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="nav-buttons">
+        <div class="nav-btn" data-screen="eventsScreen">Ивенты</div>
+        <div class="nav-btn" data-screen="shopScreen">Магазин</div>
+        <div class="nav-btn city-btn" data-screen="cityScreen">Город</div>
+        <div class="nav-btn" data-screen="leaderboardScreen">Лидеры</div>
+        <div class="nav-btn" data-screen="exchangeScreen">Обмен</div>
+    </div>
+    
+    <script>
+        // Игровые данные
+        let gameState = {
+            energy: 0,
+            gamma: 0,
+            ton: 0,
+            buildings: [],
+            premium: false,
+            premiumExpires: null,
+            lastEnergyRoulette: null,
+            gameStartDate: new Date(),
+            lastSpinAngle: 0
+        };
+        
+        // Цены и параметры зданий
+        const buildingsData = [
+            {
+                id: 'solar',
+                name: 'Солнечная батарея',
+                basePrice: 7,
+                baseIncome: 700,
+                levels: [
+                    { price: 10, income: 1000 },
+                    { price: 37, income: 2100 },
+                    { price: 54, income: 4400 },
+                    { price: 107, income: 5700 }
+                ]
+            },
+            {
+                id: 'wind',
+                name: 'Ветряная батарея',
+                basePrice: 21,
+                baseIncome: 2100,
+                levels: [
+                    { price: 58, income: 4400 },
+                    { price: 127, income: 5700 },
+                    { price: 256, income: 9600 },
+                    { price: 448, income: 17300 }
+                ]
+            },
+            {
+                id: 'water',
+                name: 'Водная батарея',
+                basePrice: 76,
+                baseIncome: 5700,
+                levels: [
+                    { price: 148, income: 9600 },
+                    { price: 272, income: 17300 },
+                    { price: 437, income: 26700 },
+                    { price: 821, income: 48400 }
+                ]
+            },
+            {
+                id: 'nuclear',
+                name: 'Ядерный реактор',
+                basePrice: 150,
+                baseIncome: 15000,
+                levels: [
+                    { price: 300, income: 30000 },
+                    { price: 600, income: 60000 },
+                    { price: 1200, income: 120000 },
+                    { price: 2400, income: 240000 }
+                ],
+                premium: true
+            }
+        ];
+        
+        // Инициализация игры
+        function initGame() {
+            // Загрузка состояния из localStorage
+            const savedState = localStorage.getItem('energyEmpireGameState');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    // Восстановление дат
+                    if (parsed.premiumExpires) parsed.premiumExpires = new Date(parsed.premiumExpires);
+                    if (parsed.lastEnergyRoulette) parsed.lastEnergyRoulette = new Date(parsed.lastEnergyRoulette);
+                    if (parsed.gameStartDate) parsed.gameStartDate = new Date(parsed.gameStartDate);
+                    
+                    gameState = parsed;
+                } catch (e) {
+                    console.error('Ошибка загрузки сохранения', e);
+                }
+            }
+            
+            // Проверка премиума
+            checkPremium();
+            
+            // Обновление интерфейса
+            updateUI();
+            renderBuildings();
+            renderShopItems();
+            renderLeaderboard();
+            
+            // Запуск игрового цикла
+            setInterval(gameLoop, 1000);
+        }
+        
+        // Игровой цикл
+        function gameLoop() {
+            // Начисление энергии от зданий
+            let incomePerSecond = 0;
+            gameState.buildings.forEach(building => {
+                const buildingData = buildingsData.find(b => b.id === building.type);
+                if (!buildingData) return;
+                
+                let income = buildingData.baseIncome;
+                if (building.level > 0) {
+                    income = buildingData.levels[building.level - 1].income;
+                }
+                
+                // Бонус премиума
+                if (gameState.premium) income *= 1.2;
+                
+                incomePerSecond += income / 3600; // Переводим в секунды
+            });
+            
+            gameState.energy += incomePerSecond;
+            
+            // Проверка премиума
+            checkPremium();
+            
+            // Сохранение состояния
+            saveGame();
+            
+            // Обновление интерфейса
+            updateUI();
+        }
+        
+        // Проверка срока действия премиума
+        function checkPremium() {
+            if (gameState.premium && gameState.premiumExpires && new Date() > gameState.premiumExpires) {
+                gameState.premium = false;
+                gameState.premiumExpires = null;
+                renderBuildings();
+                renderShopItems();
+            }
+        }
+        
+        // Сохранение игры
+        function saveGame() {
+            localStorage.setItem('energyEmpireGameState', JSON.stringify(gameState));
+        }
+        
+        // Обновление интерфейса
+        function updateUI() {
+            document.getElementById('energyAmount').textContent = Math.floor(gameState.energy).toLocaleString();
+            document.getElementById('gammaAmount').textContent = Math.floor(gameState.gamma).toLocaleString();
+            document.getElementById('tonAmount').textContent = gameState.ton.toLocaleString();
+            
+            // Расчет оставшихся дней для вывода
+            const daysPassed = Math.floor((new Date() - gameState.gameStartDate) / (1000 * 60 * 60 * 24));
+            const daysLeft = Math.max(0, 100 - daysPassed);
+            document.getElementById('daysLeft').textContent = daysLeft;
+            document.getElementById('withdrawBtn').disabled = daysLeft > 0;
+        }
+        
+        // Рендер зданий в городе
+        function renderBuildings() {
+            const container = document.getElementById('buildingsContainer');
+            container.innerHTML = '';
+            
+            if (gameState.buildings.length === 0) {
+                container.innerHTML = '<p>У вас пока нет зданий. Посетите магазин!</p>';
+                return;
+            }
+            
+            gameState.buildings.forEach((building, index) => {
+                const buildingData = buildingsData.find(b => b.id === building.type);
+                if (!buildingData) return;
+                
+                let income = buildingData.baseIncome;
+                if (building.level > 0) {
+                    income = buildingData.levels[building.level - 1].income;
+                }
+                
+                const div = document.createElement('div');
+                div.className = `building ${buildingData.premium ? 'building-premium' : ''}`;
+                div.innerHTML = `
+                    <h3>${buildingData.name} ${building.level > 0 ? 'Ур. ' + (building.level + 1) : ''}</h3>
+                    <p>Доход: ${income.toLocaleString()} э/ч</p>
+                    ${building.level < 4 ? `<button class="btn upgrade-btn" data-index="${index}">Улучшить (${buildingData.levels[building.level].price} Gamma)</button>` : ''}
+                    ${buildingData.premium ? '<div class="premium-badge">PREMIUM</div>' : ''}
+                `;
+                container.appendChild(div);
+            });
+            
+            // Добавляем обработчики улучшений
+            document.querySelectorAll('.upgrade-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    upgradeBuilding(index);
+                });
+            });
+        }
+        
+        // Рендер товаров в магазине
+        function renderShopItems() {
+            const container = document.getElementById('shopItemsContainer');
+            container.innerHTML = '';
+            
+            buildingsData.forEach(building => {
+                if (building.premium && !gameState.premium) return;
+                
+                const div = document.createElement('div');
+                div.className = `building ${building.premium ? 'building-premium' : ''}`;
+                div.innerHTML = `
+                    <h3>${building.name}</h3>
+                    <p>Цена: ${building.basePrice} Gamma</p>
+                    <p>Доход: ${building.baseIncome.toLocaleString()} э/ч</p>
+                    <button class="btn ${building.premium ? 'btn-premium' : ''}" data-type="${building.id}">Купить</button>
+                    ${building.premium ? '<div class="premium-badge">PREMIUM</div>' : ''}
+                `;
+                container.appendChild(div);
+            });
+            
+            // Добавляем обработчики покупки
+            document.querySelectorAll('.building button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const type = this.getAttribute('data-type');
+                    buyBuilding(type);
+                });
+            });
+        }
+        
+        // Рендер лидерборда
+        function renderLeaderboard() {
+            const container = document.getElementById('leaderboardContainer');
+            container.innerHTML = '';
+            
+            // Заглушка - в реальном приложении здесь будет запрос к серверу
+            for (let i = 1; i <= 10; i++) {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-item';
+                div.innerHTML = `
+                    <div>
+                        <span class="leaderboard-rank">${i}.</span>
+                        <span>Игрок ${i}</span>
+                    </div>
+                    <div>${(10000 - i * 1000).toLocaleString()} энергии</div>
+                `;
+                container.appendChild(div);
+            }
+        }
+        
+        // Покупка здания
+        function buyBuilding(type) {
+            const buildingData = buildingsData.find(b => b.id === type);
+            if (!buildingData) return;
+            
+            if (gameState.gamma >= buildingData.basePrice) {
+                gameState.gamma -= buildingData.basePrice;
+                gameState.buildings.push({
+                    type: type,
+                    level: 0
+                });
+                
+                saveGame();
+                renderBuildings();
+                renderShopItems();
+                updateUI();
+                
+                // Анимация покупки
+                animatePurchase();
+            } else {
+                alert('Недостаточно Gamma Coin!');
+            }
+        }
+        
+        // Улучшение здания
+        function upgradeBuilding(index) {
+            const building = gameState.buildings[index];
+            const buildingData = buildingsData.find(b => b.id === building.type);
+            if (!buildingData || building.level >= 4) return;
+            
+            const upgradeCost = buildingData.levels[building.level].price;
+            
+            if (gameState.gamma >= upgradeCost) {
+                gameState.gamma -= upgradeCost;
+                building.level += 1;
+                
+                saveGame();
+                renderBuildings();
+                updateUI();
+                
+                // Анимация улучшения
+                animateUpgrade();
+            } else {
+                alert('Недостаточно Gamma Coin!');
+            }
+        }
+        
+        // Обмен валюты
+        function setupExchange() {
+            document.getElementById('exchangeBtn').addEventListener('click', () => {
+                const from = document.getElementById('exchangeFrom').value;
+                const to = document.getElementById('exchangeTo').value;
+                const amount = parseFloat(document.getElementById('exchangeAmount').value);
+                
+                if (isNaN(amount) || amount <= 0) {
+                    document.getElementById('exchangeResult').textContent = 'Введите корректную сумму';
+                    return;
+                }
+                
+                // Проверка достаточности средств
+                if (from === 'energy' && gameState.energy < amount) {
+                    document.getElementById('exchangeResult').textContent = 'Недостаточно энергии';
+                    return;
+                }
+                if (from === 'gamma' && gameState.gamma < amount) {
+                    document.getElementById('exchangeResult').textContent = 'Недостаточно Gamma Coin';
+                    return;
+                }
+                if (from === 'ton' && gameState.ton < amount) {
+                    document.getElementById('exchangeResult').textContent = 'Недостаточно TON';
+                    return;
+                }
+                
+                // Выполнение обмена
+                let result = 0;
+                if (from === 'energy' && to === 'gamma') {
+                    result = amount / 1000;
+                    gameState.energy -= amount;
+                    gameState.gamma += result;
+                } else if (from === 'gamma' && to === 'ton') {
+                    result = amount / 10000;
+                    gameState.gamma -= amount;
+                    gameState.ton += result;
+                } else if (from === 'ton' && to === 'gamma') {
+                    result = amount * 10000;
+                    gameState.ton -= amount;
+                    gameState.gamma += result;
+                } else {
+                    document.getElementById('exchangeResult').textContent = 'Такой обмен невозможен';
+                    return;
+                }
+                
+                document.getElementById('exchangeResult').textContent = `Получено: ${result.toFixed(2)} ${to}`;
+                saveGame();
+                updateUI();
+            });
+            
+            // Пополнение баланса
+            document.getElementById('depositBtn').addEventListener('click', () => {
+                const amount = parseFloat(document.getElementById('depositAmount').value);
+                
+                if (isNaN(amount) || amount < 1 || amount > 100) {
+                    alert('Введите сумму от 1 до 100 TON');
+                    return;
+                }
+                
+                // В реальном приложении здесь будет интеграция с платежной системой
+                alert(`В реальном приложении здесь будет открытие платежной формы для пополнения ${amount} TON`);
+                
+                // Для демо просто добавляем баланс
+                gameState.ton += amount;
+                saveGame();
+                updateUI();
+                alert(`Баланс пополнен на ${amount} TON`);
+            });
+            
+            // Вывод средств
+            document.getElementById('withdrawBtn').addEventListener('click', () => {
+                const amount = parseFloat(document.getElementById('withdrawAmount').value);
+                const address = document.getElementById('withdrawAddress').value.trim();
+                
+                if (isNaN(amount) || amount <= 0) {
+                    alert('Введите корректную сумму');
+                    return;
+                }
+                
+                if (gameState.ton < amount) {
+                    alert('Недостаточно TON для вывода');
+                    return;
+                }
+                
+                if (!address) {
+                    alert('Введите адрес кошелька');
+                    return;
+                }
+                
+                // В реальном приложении здесь будет запрос к серверу на вывод
+                alert(`В реальном приложении будет отправлен запрос на вывод ${amount} TON на адрес ${address}`);
+                
+                // Для демо просто уменьшаем баланс
+                gameState.ton -= amount;
+                saveGame();
+                updateUI();
+                alert(`Запрос на вывод ${amount} TON отправлен`);
+            });
+        }
+        
+        // Премиум подписка
+        function setupPremium() {
+            document.getElementById('buyPremiumMonth').addEventListener('click', () => {
+                if (gameState.ton < 5) {
+                    alert('Недостаточно TON');
+                    return;
+                }
+                
+                gameState.ton -= 5;
+                gameState.premium = true;
+                const expires = new Date();
+                expires.setMonth(expires.getMonth() + 1);
+                gameState.premiumExpires = expires;
+                
+                saveGame();
+                updateUI();
+                renderBuildings();
+                renderShopItems();
+                alert('Премиум активирован на 1 месяц!');
+            });
+            
+            document.getElementById('buyPremiumForever').addEventListener('click', () => {
+                if (gameState.ton < 30) {
+                    alert('Недостаточно TON');
+                    return;
+                }
+                
+                gameState.ton -= 30;
+                gameState.premium = true;
+                gameState.premiumExpires = null; // null означает "навсегда"
+                
+                saveGame();
+                updateUI();
+                renderBuildings();
+                renderShopItems();
+                alert('Премиум активирован навсегда!');
+            });
+        }
+        
+        // Рулетка энергии
+        function setupEnergyRoulette() {
+            document.getElementById('spinEnergyBtn').addEventListener('click', () => {
+                // Проверка, что прошли сутки с последнего использования
+                if (gameState.lastEnergyRoulette) {
+                    const now = new Date();
+                    const last = new Date(gameState.lastEnergyRoulette);
+                    const diffHours = (now - last) / (1000 * 60 * 60);
+                    
+                    if (diffHours < 24) {
+                        const hoursLeft = Math.ceil(24 - diffHours);
+                        alert(`Вы можете крутить рулетку только раз в сутки. Попробуйте через ${hoursLeft} часов.`);
+                        return;
+                    }
+                }
+                
+                // Анимация вращения
+                const wheel = document.getElementById('energyWheel');
+                const spins = 5 + Math.random() * 3; // 5-8 полных оборотов
+                const angle = gameState.lastSpinAngle + 360 * spins;
+                gameState.lastSpinAngle = angle % 360;
+                
+                wheel.style.transform = `rotate(${angle}deg)`;
+                
+                // Результат после анимации
+                setTimeout(() => {
+                    const reward = Math.floor(100 + Math.random() * 1900); // 100-2000
+                    gameState.energy += reward;
+                    gameState.lastEnergyRoulette = new Date();
+                    
+                    document.getElementById('energyRouletteResult').innerHTML = `
+                        <p>Поздравляем! Вы получили ${reward} энергии!</p>
+                    `;
+                    
+                    saveGame();
+                    updateUI();
+                }, 3000);
+            });
+        }
+        
+        // Рулетка удачи
+        function setupLuckRoulette() {
+            document.getElementById('spinLuckBtn').addEventListener('click', () => {
+                if (gameState.ton < 1) {
+                    alert('Недостаточно TON');
+                    return;
+                }
+                
+                gameState.ton -= 1;
+                
+                // Анимация вращения
+                const wheel = document.getElementById('luckWheel');
+                const spins = 5 + Math.random() * 3; // 5-8 полных оборотов
+                const angle = gameState.lastSpinAngle + 360 * spins;
+                gameState.lastSpinAngle = angle % 360;
+                
+                wheel.style.transform = `rotate(${angle}deg)`;
+                
+                // Результат после анимации
+                setTimeout(() => {
+                    const reward = 0.5 + Math.random() * 4.5; // 0.5-5
+                    gameState.ton += reward;
+                    
+                    document.getElementById('luckRouletteResult').innerHTML = `
+                        <p>Поздравляем! Вы получили ${reward.toFixed(2)} TON!</p>
+                    `;
+                    
+                    saveGame();
+                    updateUI();
+                }, 3000);
+            });
+        }
+        
+        // Анимация покупки
+        function animatePurchase() {
+            const anim = document.createElement('div');
+            anim.className = 'purchase-anim';
+            anim.style.position = 'fixed';
+            anim.style.top = '50%';
+            anim.style.left = '50%';
+            anim.style.transform = 'translate(-50%, -50%)';
+            anim.style.fontSize = '24px';
+            anim.style.color = '#6e8efb';
+            anim.style.zIndex = '1000';
+            anim.textContent = 'Успешная покупка!';
+            anim.style.animation = 'fadeOut 2s forwards';
+            
+            document.body.appendChild(anim);
+            
+            setTimeout(() => {
+                document.body.removeChild(anim);
+            }, 2000);
+        }
+        
+        // Анимация улучшения
+        function animateUpgrade() {
+            const anim = document.createElement('div');
+            anim.className = 'upgrade-anim';
+            anim.style.position = 'fixed';
+            anim.style.top = '50%';
+            anim.style.left = '50%';
+            anim.style.transform = 'translate(-50%, -50%)';
+            anim.style.fontSize = '24px';
+            anim.style.color = '#a777e3';
+            anim.style.zIndex = '1000';
+            anim.textContent = 'Улучшено!';
+            anim.style.animation = 'fadeOut 2s forwards';
+            
+            document.body.appendChild(anim);
+            
+            setTimeout(() => {
+                document.body.removeChild(anim);
+            }, 2000);
+        }
+        
+        // Переключение экранов
+        function setupNavigation() {
+            // Навигация по кнопкам внизу
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const screenId = this.getAttribute('data-screen');
+                    showScreen(screenId);
+                    
+                    // Подсветка активной кнопки
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Кнопки в хедере
+            document.getElementById('energyRouletteBtn').addEventListener('click', () => showScreen('energyRouletteScreen'));
+            document.getElementById('luckRouletteBtn').addEventListener('click', () => showScreen('luckRouletteScreen'));
+            document.getElementById('premiumBtn').addEventListener('click', () => showScreen('premiumScreen'));
+            
+            // Переключение табов в обмене
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Подсветка активного таба
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Показ соответствующего контента
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    document.getElementById(`${tabId}Tab`).classList.add('active');
+                });
+            });
+        }
+        
+        // Показать экран
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame();
+            setupNavigation();
+            setupExchange();
+            setupPremium();
+            setupEnergyRoulette();
+            setupLuckRoulette();
+            
+            // Для демо: начальные значения
+            if (gameState.energy === 0 && gameState.gamma === 0 && gameState.ton === 0) {
+                gameState.energy = 1000;
+                gameState.gamma = 50;
+                gameState.ton = 2;
+                saveGame();
+                updateUI();
+            }
+        });
+    </script>
+</body>
+</html>
