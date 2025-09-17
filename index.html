@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Mini-Lovable AI с балансом</title>
+<style>
+body { font-family: Arial, sans-serif; background-color: #282c34; color: #fff; padding: 20px; margin:0; }
+h1 { margin-top: 20px; }
+p { font-size: 18px; }
+#preview { border:1px solid #ccc; padding:10px; margin-bottom:20px; min-height:200px; }
+button { padding: 10px 20px; margin: 5px; background-color: #61dafb; color: #fff; border: none; border-radius:5px; cursor:pointer; }
+button:hover { opacity:0.8; }
+.panel { max-width:600px; margin:auto; background:#333; padding:10px; border-radius:10px; }
+#chat { display:flex; flex-wrap:wrap; margin-bottom:10px; }
+#command { flex:1 1 70%; padding:8px; margin-bottom:5px; font-size:16px; }
+#send { padding:8px 12px; margin-left:5px; font-size:16px; }
+.button-item { display:flex; align-items:center; margin:5px 0; }
+.button-item input[type="text"]{flex:1; padding:4px;margin-right:5px;}
+.button-item input[type="color"]{margin-right:5px;}
+.button-item button{padding:4px 8px;}
+#balanceDisplay{margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<h1 id="heading">Привет, мир!</h1>
+<p id="paragraph">Это продвинутый мини-Lovable AI с балансом.</p>
+
+<div id="preview">
+  <div id="buttons">
+    <button onclick="buyItem('Кнопка 1', 10)">Кнопка 1</button>
+  </div>
+</div>
+
+<div class="panel">
+  <div id="balanceDisplay">Баланс: <span id="balance"></span> монет</div>
+
+  <div id="chat">
+    <input type="text" id="command" placeholder="Например: добавь кнопку Купить 50"/>
+    <button id="send">Отправить</button>
+  </div>
+
+  <h4>Управление кнопками</h4>
+  <div id="button-editor"></div>
+  <button onclick="downloadSite()">Скачать готовый сайт</button>
+  <p>Команды: "заголовок Текст", "параграф Текст", "фон #цвет", "текст #цвет", "добавь кнопку Купить 50"</p>
+</div>
+
+<script>
+// Баланс
+let balance = parseInt(localStorage.getItem('balance')) || 100;
+const balanceSpan = document.getElementById('balance');
+function updateBalance() {
+    balanceSpan.textContent = balance;
+    localStorage.setItem('balance', balance);
+}
+updateBalance();
+
+// Основные элементы
+const heading = document.getElementById('heading');
+const paragraph = document.getElementById('paragraph');
+const buttonsDiv = document.getElementById('buttons');
+const commandInput = document.getElementById('command');
+const buttonEditor = document.getElementById('button-editor');
+
+// Функция покупки
+function buyItem(name, cost){
+    if(balance >= cost){
+        balance -= cost;
+        updateBalance();
+        alert(`Вы купили ${name} за ${cost} монет!`);
+    } else {
+        alert('Недостаточно монет!');
+    }
+}
+
+// Чат-команды
+document.getElementById('send').addEventListener('click', ()=>{
+    const cmd = commandInput.value.trim();
+    if(cmd==='') return;
+    parseCommand(cmd);
+    commandInput.value='';
+    refreshButtonEditor();
+});
+
+// Парсинг команд
+function parseCommand(cmd){
+    const lower = cmd.toLowerCase();
+
+    if(lower.startsWith('заголовок ')) { heading.textContent = cmd.slice(10).trim(); return; }
+    if(lower.startsWith('параграф ')) { paragraph.textContent = cmd.slice(9).trim(); return; }
+    if(lower.startsWith('фон ')) {
+        const color = cmd.slice(4).trim();
+        if(/^#([0-9A-Fa-f]{3}){1,2}$/.test(color)) document.body.style.backgroundColor=color;
+        return;
+    }
+    if(lower.startsWith('текст ')) {
+        const color = cmd.slice(6).trim();
+        if(/^#([0-9A-Fa-f]{3}){1,2}$/.test(color)) document.body.style.color=color;
+        return;
+    }
+    if(lower.startsWith('добавь кнопку ')){
+        // формат: "добавь кнопку Купить 50"
+        let parts = cmd.slice(14).trim().split(' ');
+        if(parts.length>=2){
+            let cost = parseInt(parts.pop());
+            let text = parts.join(' ');
+            addButton(text, cost);
+        }
+        return;
+    }
+    alert('Команда не распознана.');
+}
+
+// Добавление кнопки
+function addButton(text, cost){
+    const btn = document.createElement('button');
+    btn.textContent = text;
+    btn.onclick = ()=>buyItem(text, cost);
+    btn.style.backgroundColor='#61dafb';
+    buttonsDiv.appendChild(btn);
+    refreshButtonEditor();
+}
+
+// Панель редактирования кнопок
+function refreshButtonEditor(){
+    buttonEditor.innerHTML='';
+    Array.from(buttonsDiv.querySelectorAll('button')).forEach((btn, idx)=>{
+        const div = document.createElement('div');
+        div.className='button-item';
+
+        const textInput = document.createElement('input');
+        textInput.type='text';
+        textInput.value=btn.textContent;
+        textInput.addEventListener('input', ()=>btn.textContent=textInput.value);
+
+        const colorInput = document.createElement('input');
+        colorInput.type='color';
+        colorInput.value = rgbToHex(btn.style.backgroundColor || '#61dafb');
+        colorInput.addEventListener('input', ()=>btn.style.backgroundColor=colorInput.value);
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent='Удалить';
+        delBtn.addEventListener('click', ()=>{
+            btn.remove();
+            refreshButtonEditor();
+        });
+
+        div.appendChild(textInput);
+        div.appendChild(colorInput);
+        div.appendChild(delBtn);
+        buttonEditor.appendChild(div);
+    });
+}
+
+// rgb->hex
+function rgbToHex(rgb){
+    if(!rgb) return '#61dafb';
+    const res=/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(rgb);
+    if(!res) return '#61dafb';
+    return "#"+[1,2,3].map(i=>("0"+parseInt(res[i]).toString(16)).slice(-2)).join('');
+}
+
+// Скачать сайт
+function downloadSite(){
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>${heading.textContent}</title>
+<style>
+body { font-family: Arial, sans-serif; background-color: ${document.body.style.backgroundColor || '#282c34'}; color: ${document.body.style.color || '#fff'}; padding:20px; text-align:center;}
+button { padding:10px 20px; margin:5px; background-color:#61dafb; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+button:hover{opacity:0.8;}
+</style>
+</head>
+<body>
+<h1>${heading.textContent}</h1>
+<p>${paragraph.textContent}</p>
+<div id="buttons">
+${Array.from(buttonsDiv.querySelectorAll('button')).map(b=>`<button onclick="buyItem('${b.textContent}', ${10})" style="background-color:${b.style.backgroundColor || '#61dafb'}">${b.textContent}</button>`).join('\n')}
+</div>
+<div id="balanceDisplay">Баланс: <span id="balance">${balance}</span> монет</div>
+<script>
+let balance = ${balance};
+function buyItem(name,cost){
+    if(balance>=cost){balance-=cost;alert('Вы купили '+name+' за '+cost+' монет!');document.getElementById('balance').textContent=balance;}
+    else alert('Недостаточно монет!');
+}
+</script>
+</body>
+</html>`;
+    const blob = new Blob([htmlContent],{type:'text/html'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download='site.html';
+    link.click();
+}
+
+// Инициализация
+refreshButtonEditor();
+</script>
+</body>
+</html>
