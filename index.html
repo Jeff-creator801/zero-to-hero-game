@@ -1,205 +1,588 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Mini-Lovable AI с балансом</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fluppy Block — браузерная игра</title>
 <style>
-body { font-family: Arial, sans-serif; background-color: #282c34; color: #fff; padding: 20px; margin:0; }
-h1 { margin-top: 20px; }
-p { font-size: 18px; }
-#preview { border:1px solid #ccc; padding:10px; margin-bottom:20px; min-height:200px; }
-button { padding: 10px 20px; margin: 5px; background-color: #61dafb; color: #fff; border: none; border-radius:5px; cursor:pointer; }
-button:hover { opacity:0.8; }
-.panel { max-width:600px; margin:auto; background:#333; padding:10px; border-radius:10px; }
-#chat { display:flex; flex-wrap:wrap; margin-bottom:10px; }
-#command { flex:1 1 70%; padding:8px; margin-bottom:5px; font-size:16px; }
-#send { padding:8px 12px; margin-left:5px; font-size:16px; }
-.button-item { display:flex; align-items:center; margin:5px 0; }
-.button-item input[type="text"]{flex:1; padding:4px;margin-right:5px;}
-.button-item input[type="color"]{margin-right:5px;}
-.button-item button{padding:4px 8px;}
-#balanceDisplay{margin-bottom:10px;}
+  :root{
+    --bg:#0b1020;
+    --panel:#0f1724;
+    --accent:#ffcc33;
+    --muted:#9aa4b2;
+  }
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Arial;background:linear-gradient(180deg,var(--bg) 0%, #071023 100%);color:#e6eef6}
+  .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{
+    width:980px;max-width:100%;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:14px;padding:16px;box-shadow:0 6px 30px rgba(2,6,23,0.6);display:grid;grid-template-columns:1fr 360px;gap:14px;
+  }
+  .left{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;padding:8px;}
+  canvas{background:linear-gradient(180deg,#081225,#061020);border-radius:10px;width:100%;height:560px;display:block;touch-action:none;}
+  .right{background:linear-gradient(180deg,var(--panel),rgba(255,255,255,0.02));padding:14px;border-radius:10px;display:flex;flex-direction:column;gap:10px;}
+  h1{margin:0;font-size:20px;display:flex;align-items:center;gap:10px}
+  .controls{display:flex;flex-direction:column;gap:8px}
+  .btn{background:#0b1a2b;border:1px solid rgba(255,255,255,0.04);color:var(--accent);padding:10px;border-radius:8px;cursor:pointer;text-align:center}
+  .btn.secondary{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+  .row{display:flex;gap:8px;align-items:center}
+  label{font-size:13px;color:var(--muted)}
+  select,input[type=range]{width:100%}
+  .stats{display:flex;flex-direction:row;gap:10px;justify-content:space-between;padding:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:8px}
+  .muted{color:var(--muted);font-size:13px}
+  footer{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
+  @media(max-width:880px){
+    .card{grid-template-columns:1fr; padding:10px}
+    canvas{height:420px}
+  }
 </style>
 </head>
 <body>
+<div class="wrap">
+  <div class="card" role="application" aria-label="Fluppy Block Game">
+    <div class="left">
+      <h1>🟨 Fluppy Block</h1>
+      <canvas id="game"></canvas>
+      <div class="stats" aria-live="polite">
+        <div>
+          <div class="muted">Очки</div>
+          <div id="score" style="font-weight:700;font-size:20px">0</div>
+        </div>
+        <div>
+          <div class="muted">Рекорд</div>
+          <div id="best" style="font-weight:700;font-size:20px">0</div>
+        </div>
+        <div>
+          <div class="muted">Сложность</div>
+          <div id="curDiff" class="muted">normal</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button id="startBtn" class="btn">▶ Запустить</button>
+        <button id="pauseBtn" class="btn secondary">⏸ Пауза</button>
+        <button id="muteBtn" class="btn secondary">🔊 Звук</button>
+        <button id="resetBest" class="btn secondary">♻ Сброс рекорда</button>
+      </div>
+      <div class="muted" style="margin-top:8px;text-align:center">Управление: клик/тап/пробел/стрелка вверх — подпрыгнуть</div>
+    </div>
 
-<h1 id="heading">Привет, мир!</h1>
-<p id="paragraph">Это продвинутый мини-Lovable AI с балансом.</p>
+    <div class="right" aria-hidden="false">
+      <div>
+        <label>Выбор сложности</label>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <select id="difficulty">
+            <option value="easy">easy — спокойный</option>
+            <option value="normal" selected>normal — баланс</option>
+            <option value="hard">hard — быстро</option>
+            <option value="insane">insane — только для смелых</option>
+          </select>
+        </div>
+      </div>
 
-<div id="preview">
-  <div id="buttons">
-    <button onclick="buyItem('Кнопка 1', 10)">Кнопка 1</button>
+      <div>
+        <label>Скорость мирового смещения</label>
+        <input id="speedRange" type="range" min="0.6" max="2.0" step="0.05" value="1">
+      </div>
+
+      <div>
+        <label>Цвет плитки</label>
+        <input id="accentColor" type="color" value="#ffcc33" style="width:100%;height:42px;padding:2px;border-radius:6px;">
+      </div>
+
+      <div class="controls">
+        <div class="row"><button id="howBtn" class="btn secondary">ℹ Как играть</button></div>
+        <div class="row"><button id="shareBtn" class="btn">✂ Скопировать код</button></div>
+      </div>
+
+      <div style="margin-top:auto">
+        <div class="muted">Версия: 1.0 — автономная</div>
+        <div class="muted" style="margin-top:6px">Сохранение рекорда: localStorage</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="panel">
-  <div id="balanceDisplay">Баланс: <span id="balance"></span> монет</div>
-
-  <div id="chat">
-    <input type="text" id="command" placeholder="Например: добавь кнопку Купить 50"/>
-    <button id="send">Отправить</button>
-  </div>
-
-  <h4>Управление кнопками</h4>
-  <div id="button-editor"></div>
-  <button onclick="downloadSite()">Скачать готовый сайт</button>
-  <p>Команды: "заголовок Текст", "параграф Текст", "фон #цвет", "текст #цвет", "добавь кнопку Купить 50"</p>
-</div>
+<footer style="opacity:0.9">Создано с любовью — Fluppy Block</footer>
 
 <script>
-// Баланс
-let balance = parseInt(localStorage.getItem('balance')) || 100;
-const balanceSpan = document.getElementById('balance');
-function updateBalance() {
-    balanceSpan.textContent = balance;
-    localStorage.setItem('balance', balance);
-}
-updateBalance();
+/*
+  Fluppy Block — single-file game
+  Features:
+   - canvas-based, responsive
+   - selectable difficulty
+   - controls: click/tap/space/arrow-up
+   - sound via WebAudio (toggleable)
+   - highscore saved in localStorage
+   - mobile-friendly
+*/
 
-// Основные элементы
-const heading = document.getElementById('heading');
-const paragraph = document.getElementById('paragraph');
-const buttonsDiv = document.getElementById('buttons');
-const commandInput = document.getElementById('command');
-const buttonEditor = document.getElementById('button-editor');
+(() => {
+  // --- Config & state ---
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  let W = 900, H = 560;
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
-// Функция покупки
-function buyItem(name, cost){
-    if(balance >= cost){
-        balance -= cost;
-        updateBalance();
-        alert(`Вы купили ${name} за ${cost} монет!`);
-    } else {
-        alert('Недостаточно монет!');
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const resetBest = document.getElementById('resetBest');
+  const difficultySelect = document.getElementById('difficulty');
+  const speedRange = document.getElementById('speedRange');
+  const accentColorInput = document.getElementById('accentColor');
+  const curDiff = document.getElementById('curDiff');
+  const howBtn = document.getElementById('howBtn');
+  const shareBtn = document.getElementById('shareBtn');
+
+  let lastTime = 0;
+  let rafId = null;
+  let running = false;
+  let paused = false;
+  let soundOn = true;
+  let worldSpeed = parseFloat(speedRange.value);
+
+  // Game variables
+  const gravity = 0.0016; // px per ms^2 (scaled)
+  let player, pipes, particles;
+  let score = 0;
+  let best = parseInt(localStorage.getItem('fluppy_best') || '0', 10) || 0;
+
+  bestEl.textContent = best;
+
+  // Audio: tiny WebAudio fx generator
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = AudioCtx ? new AudioCtx() : null;
+
+  function beep(freq=440, dur=0.08, type='sine', vol=0.12) {
+    if(!audioCtx || !soundOn) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.value = vol;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + dur);
+  }
+
+  // Responsive resize
+  function resizeCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  // Init and reset
+  function initGame(){
+    // scale based on canvas area
+    const base = Math.min(canvas.width / DPR, canvas.height / DPR);
+    player = {
+      x: 120,
+      y: Math.floor(H/2),
+      w: Math.max(18, Math.floor(base*0.04)),
+      h: Math.max(18, Math.floor(base*0.04)),
+      vy: 0,
+      alive: true,
+      tilt:0,
+    };
+    pipes = [];
+    particles = [];
+    score = 0;
+    speed = 1;
+    spawnTimer = 0;
+    gapSize = Math.max(120, Math.floor(H*0.25));
+    pipeW = Math.max(48, Math.floor(base*0.08));
+    baseSpeed = 0.32 * worldSpeed; // px per ms
+    lastSpawnInterval = 1600 / worldSpeed;
+    // difficulty tweak
+    applyDifficulty(difficultySelect.value);
+    scoreEl.textContent = score;
+    curDiff.textContent = difficultySelect.value;
+  }
+
+  function applyDifficulty(d){
+    // adjust parameters by difficulty
+    switch(d){
+      case 'easy':
+        baseSpeed *= 0.85;
+        gapSize *= 1.18;
+        lastSpawnInterval *= 1.2;
+        break;
+      case 'normal':
+        break;
+      case 'hard':
+        baseSpeed *= 1.15;
+        gapSize *= 0.88;
+        lastSpawnInterval *= 0.85;
+        break;
+      case 'insane':
+        baseSpeed *= 1.4;
+        gapSize *= 0.75;
+        lastSpawnInterval *= 0.7;
+        break;
     }
-}
+  }
 
-// Чат-команды
-document.getElementById('send').addEventListener('click', ()=>{
-    const cmd = commandInput.value.trim();
-    if(cmd==='') return;
-    parseCommand(cmd);
-    commandInput.value='';
-    refreshButtonEditor();
-});
+  // Pipes generation
+  let spawnTimer = 0;
+  let lastSpawnInterval = 1600;
+  let pipeW = 64, gapSize = 160, baseSpeed = 0.5, speed=1, lastSpawnAt=0;
 
-// Парсинг команд
-function parseCommand(cmd){
-    const lower = cmd.toLowerCase();
-
-    if(lower.startsWith('заголовок ')) { heading.textContent = cmd.slice(10).trim(); return; }
-    if(lower.startsWith('параграф ')) { paragraph.textContent = cmd.slice(9).trim(); return; }
-    if(lower.startsWith('фон ')) {
-        const color = cmd.slice(4).trim();
-        if(/^#([0-9A-Fa-f]{3}){1,2}$/.test(color)) document.body.style.backgroundColor=color;
-        return;
-    }
-    if(lower.startsWith('текст ')) {
-        const color = cmd.slice(6).trim();
-        if(/^#([0-9A-Fa-f]{3}){1,2}$/.test(color)) document.body.style.color=color;
-        return;
-    }
-    if(lower.startsWith('добавь кнопку ')){
-        // формат: "добавь кнопку Купить 50"
-        let parts = cmd.slice(14).trim().split(' ');
-        if(parts.length>=2){
-            let cost = parseInt(parts.pop());
-            let text = parts.join(' ');
-            addButton(text, cost);
-        }
-        return;
-    }
-    alert('Команда не распознана.');
-}
-
-// Добавление кнопки
-function addButton(text, cost){
-    const btn = document.createElement('button');
-    btn.textContent = text;
-    btn.onclick = ()=>buyItem(text, cost);
-    btn.style.backgroundColor='#61dafb';
-    buttonsDiv.appendChild(btn);
-    refreshButtonEditor();
-}
-
-// Панель редактирования кнопок
-function refreshButtonEditor(){
-    buttonEditor.innerHTML='';
-    Array.from(buttonsDiv.querySelectorAll('button')).forEach((btn, idx)=>{
-        const div = document.createElement('div');
-        div.className='button-item';
-
-        const textInput = document.createElement('input');
-        textInput.type='text';
-        textInput.value=btn.textContent;
-        textInput.addEventListener('input', ()=>btn.textContent=textInput.value);
-
-        const colorInput = document.createElement('input');
-        colorInput.type='color';
-        colorInput.value = rgbToHex(btn.style.backgroundColor || '#61dafb');
-        colorInput.addEventListener('input', ()=>btn.style.backgroundColor=colorInput.value);
-
-        const delBtn = document.createElement('button');
-        delBtn.textContent='Удалить';
-        delBtn.addEventListener('click', ()=>{
-            btn.remove();
-            refreshButtonEditor();
-        });
-
-        div.appendChild(textInput);
-        div.appendChild(colorInput);
-        div.appendChild(delBtn);
-        buttonEditor.appendChild(div);
+  function spawnPipe(){
+    const minY = 40;
+    const maxY = H - minY - gapSize;
+    const y = Math.floor(Math.random() * (Math.max(1,maxY - minY + 1))) + minY;
+    pipes.push({
+      x: W + 20,
+      y: y,
+      w: pipeW,
+      gap: gapSize,
+      passed: false,
+      color: accentColorInput.value,
     });
-}
+  }
 
-// rgb->hex
-function rgbToHex(rgb){
-    if(!rgb) return '#61dafb';
-    const res=/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(rgb);
-    if(!res) return '#61dafb';
-    return "#"+[1,2,3].map(i=>("0"+parseInt(res[i]).toString(16)).slice(-2)).join('');
-}
+  // Particles for effect
+  function spawnParticles(x,y,color,amt=12){
+    for(let i=0;i<amt;i++){
+      particles.push({
+        x:x, y:y,
+        vx:(Math.random()-0.5)*0.8,
+        vy:(Math.random()-0.8)*0.8,
+        life:600 + Math.random()*400,
+        t:0,
+        c: color
+      });
+    }
+  }
 
-// Скачать сайт
-function downloadSite(){
-    const htmlContent = `
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>${heading.textContent}</title>
-<style>
-body { font-family: Arial, sans-serif; background-color: ${document.body.style.backgroundColor || '#282c34'}; color: ${document.body.style.color || '#fff'}; padding:20px; text-align:center;}
-button { padding:10px 20px; margin:5px; background-color:#61dafb; color:#fff; border:none; border-radius:5px; cursor:pointer; }
-button:hover{opacity:0.8;}
-</style>
-</head>
-<body>
-<h1>${heading.textContent}</h1>
-<p>${paragraph.textContent}</p>
-<div id="buttons">
-${Array.from(buttonsDiv.querySelectorAll('button')).map(b=>`<button onclick="buyItem('${b.textContent}', ${10})" style="background-color:${b.style.backgroundColor || '#61dafb'}">${b.textContent}</button>`).join('\n')}
-</div>
-<div id="balanceDisplay">Баланс: <span id="balance">${balance}</span> монет</div>
-<script>
-let balance = ${balance};
-function buyItem(name,cost){
-    if(balance>=cost){balance-=cost;alert('Вы купили '+name+' за '+cost+' монет!');document.getElementById('balance').textContent=balance;}
-    else alert('Недостаточно монет!');
-}
-</script>
-</body>
-</html>`;
-    const blob = new Blob([htmlContent],{type:'text/html'});
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download='site.html';
-    link.click();
-}
+  // Input handler (jump)
+  function jump(){
+    if(!player.alive){
+      startGame(); return;
+    }
+    player.vy = -0.45;
+    player.tilt = -0.9;
+    beep(660, 0.06, 'sine', 0.08);
+    spawnParticles(player.x + player.w/2, player.y + player.h/2, accentColorInput.value, 6);
+  }
 
-// Инициализация
-refreshButtonEditor();
+  // Physics & update
+  function update(dt){
+    if(!player.alive) return;
+    // gravity (scale dt)
+    player.vy += gravity * dt * (worldSpeed);
+    player.y += player.vy * dt;
+
+    // tilt relax
+    player.tilt += (0 - player.tilt) * 0.02;
+
+    // ground / ceiling
+    if(player.y + player.h > H - 8){
+      player.y = H - 8 - player.h;
+      die();
+    }
+    if(player.y < 8){
+      player.y = 8;
+      player.vy = 0;
+    }
+
+    // pipes movement + spawn
+    spawnTimer += dt;
+    if(spawnTimer > lastSpawnInterval){
+      spawnTimer = 0;
+      spawnPipe();
+    }
+    const move = baseSpeed * dt * (1 + Math.min(1.6, score*0.02)) * (1 + (difficultySelect.value==='insane'?0.2:0));
+    for(let i=pipes.length-1;i>=0;i--){
+      const p = pipes[i];
+      p.x -= move;
+      // scoring
+      if(!p.passed && p.x + p.w < player.x){
+        p.passed = true;
+        score += 1;
+        scoreEl.textContent = score;
+        beep(880 - Math.min(600,score*6), 0.04, 'square', 0.05);
+        spawnParticles(player.x, player.y + player.h/2, accentColorInput.value, 8);
+        if(score > best){
+          best = score;
+          bestEl.textContent = best;
+          localStorage.setItem('fluppy_best', String(best));
+        }
+      }
+      // cull
+      if(p.x + p.w < -50) pipes.splice(i,1);
+    }
+
+    // collisions
+    for(const p of pipes){
+      // top rect: (p.x,0,p.w,p.y)
+      // bottom rect: (p.x,p.y+p.gap,p.w,H-(p.y+p.gap))
+      if(rectsOverlap(player, {x:p.x,y:0,w:p.w,h:p.y}) || rectsOverlap(player, {x:p.x,y:p.y+p.gap,w:p.w,h:H-(p.y+p.gap)})){
+        die();
+      }
+    }
+
+    // particles update
+    for(let i=particles.length-1;i>=0;i--){
+      const pa = particles[i];
+      pa.t += dt;
+      pa.x += pa.vx * dt * 0.4 * (1 + (Math.random()-0.5)*0.6);
+      pa.y += pa.vy * dt * 0.4 + 0.0006 * dt * dt;
+      pa.vy += 0.0008 * dt;
+      if(pa.t > pa.life) particles.splice(i,1);
+    }
+  }
+
+  function rectsOverlap(a,b){
+    return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h);
+  }
+
+  function die(){
+    if(!player.alive) return;
+    player.alive = false;
+    beep(120, 0.25, 'sawtooth', 0.16);
+    spawnParticles(player.x + player.w/2, player.y + player.h/2, '#ff6666', 20);
+    // shake and stop spawn
+  }
+
+  // Render
+  function draw(){
+    // clear
+    ctx.fillStyle = '#061022';
+    ctx.fillRect(0,0,W,H);
+
+    // background parallax (grid)
+    drawBackgroundGrid();
+
+    // pipes
+    for(const p of pipes){
+      drawPipe(p);
+    }
+
+    // particles
+    for(const pa of particles){
+      const alpha = 1 - (pa.t/pa.life);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = pa.c;
+      ctx.fillRect(pa.x-2, pa.y-2, 4, 4);
+    }
+    ctx.globalAlpha = 1;
+
+    // player
+    ctx.save();
+    ctx.translate(player.x + player.w/2, player.y + player.h/2);
+    const tilt = Math.max(-0.8, Math.min(0.8, player.vy * 0.6 + player.tilt));
+    ctx.rotate(tilt);
+    // body
+    ctx.fillStyle = accentColorInput.value;
+    roundRect(ctx, -player.w/2, -player.h/2, player.w, player.h, 4);
+    ctx.fill();
+    // eye
+    ctx.fillStyle = '#061022';
+    ctx.fillRect(-player.w*0.08, -player.h*0.15, player.w*0.18, player.h*0.18);
+    ctx.restore();
+
+    // HUD (optional subtle)
+    // bottom ground
+    ctx.fillStyle = '#061523';
+    ctx.fillRect(0,H-8,W,8);
+  }
+
+  function drawBackgroundGrid(){
+    // subtle moving grid
+    const g = Math.max(40, Math.floor(W/18));
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#ffffff';
+    const t = performance.now() * 0.02;
+    for(let x = (t%g)-g; x < W; x += g){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+    for(let y = (t%g)-g; y < H; y += g){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawPipe(p){
+    // top bar
+    ctx.save();
+    ctx.fillStyle = p.color;
+    roundRect(ctx, p.x, 0, p.w, p.y, 8);
+    ctx.fill();
+    // bottom bar
+    roundRect(ctx, p.x, p.y + p.gap, p.w, H - (p.y + p.gap), 8);
+    ctx.fill();
+    // inner shading
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(p.x, 0, p.w, p.y);
+    ctx.fillRect(p.x, p.y + p.gap, p.w, H - (p.y + p.gap));
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    const rad = Math.min(16, r);
+    ctx.beginPath();
+    ctx.moveTo(x+rad,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rad);
+    ctx.arcTo(x+w,y+h,x,y+h,rad);
+    ctx.arcTo(x,y+h,x,y,rad);
+    ctx.arcTo(x,y,x+w,y,rad);
+    ctx.closePath();
+  }
+
+  // Main loop
+  function loop(ts){
+    if(!lastTime) lastTime = ts;
+    const dt = Math.min(40, ts - lastTime); // ms
+    lastTime = ts;
+    if(running && !paused){
+      update(dt);
+      draw();
+    } else {
+      // still draw to keep visuals fresh
+      draw();
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+
+  // Controls
+  function startGame(){
+    if(!running){
+      running = true;
+      paused = false;
+      initGame();
+      lastTime = 0;
+      if(!rafId) rafId = requestAnimationFrame(loop);
+      startBtn.textContent = '⟳ Рестарт';
+    } else {
+      // restart
+      initGame();
+      player.alive = true;
+      paused = false;
+      scoreEl.textContent = score;
+    }
+  }
+  function togglePause(){
+    if(!running) return;
+    paused = !paused;
+    pauseBtn.textContent = paused ? '▶ Возобновить' : '⏸ Пауза';
+    if(!paused) {
+      // resume timing
+      lastTime = performance.now();
+    }
+  }
+  function toggleMute(){
+    soundOn = !soundOn;
+    muteBtn.textContent = soundOn ? '🔊 Звук' : '🔇 Без звука';
+    if(audioCtx && soundOn && audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  // Input wiring
+  window.addEventListener('keydown', (e) => {
+    if(e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+      e.preventDefault();
+      jump();
+    }
+    if(e.code === 'KeyP') togglePause();
+  });
+  canvas.addEventListener('pointerdown', (e) => {
+    jump();
+  });
+  // for mobile tap region
+  canvas.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); }, {passive:false});
+
+  startBtn.addEventListener('click', () => {
+    // ensure audio context unlocked on user gesture
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    startGame();
+  });
+  pauseBtn.addEventListener('click', togglePause);
+  muteBtn.addEventListener('click', toggleMute);
+  resetBest.addEventListener('click', () => {
+    if(confirm('Сбросить рекорд?')){
+      best = 0;
+      localStorage.setItem('fluppy_best','0');
+      bestEl.textContent = best;
+    }
+  });
+
+  difficultySelect.addEventListener('change', () => {
+    curDiff.textContent = difficultySelect.value;
+    // apply live difficulty impact
+    applyDifficulty(difficultySelect.value);
+  });
+  speedRange.addEventListener('input', (e) => {
+    worldSpeed = parseFloat(e.target.value);
+  });
+  accentColorInput.addEventListener('input', () => {
+    // immediate cosmetic update: nothing else needed because draw reads color
+  });
+
+  howBtn.addEventListener('click', ()=> {
+    alert('Fluppy Block — цель: пройти как можно больше блоков.\n\nУправление: касание/клик/пробел/стрелка вверх. Нажмите Старт, чтобы начать.\n\nСложность влияет на частоту и скорость блоков. Рекорд сохраняется в браузере.');
+  });
+
+  shareBtn.addEventListener('click', ()=> {
+    // copy the whole HTML to clipboard for easy pasting
+    const code = `<!doctype html>\\n${document.documentElement.outerHTML}`;
+    navigator.clipboard.writeText(code).then(()=> {
+      shareBtn.textContent = '✓ Скопировано';
+      setTimeout(()=> shareBtn.textContent = '✂ Скопировать код', 1600);
+    }).catch(()=> {
+      shareBtn.textContent = 'Ошибка';
+      setTimeout(()=> shareBtn.textContent = '✂ Скопировать код', 1600);
+    });
+  });
+
+  // keep canvas sized to container
+  function fitCanvasToContainer(){
+    const rect = canvas.getBoundingClientRect();
+    if(rect.width === 0 || rect.height === 0){
+      // ensure a default size if not laid out yet
+      canvas.style.width = '100%';
+      canvas.style.height = '560px';
+    }
+    resizeCanvas();
+  }
+  window.addEventListener('resize', () => {
+    fitCanvasToContainer();
+  });
+
+  // initialize
+  fitCanvasToContainer();
+  initGame();
+  draw();
+
+  // Auto-pause when tab hidden
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden && running && !paused){
+      paused = true;
+      pauseBtn.textContent = '▶ Возобновить';
+    }
+  });
+
+  // slight autoplay note for audio
+  if(audioCtx){
+    // unlock on first user gesture is handled when starting
+  }
+
+  // expose minimal debug on window for tinkering
+  window.__fluppy = {
+    start: startGame,
+    pause: togglePause,
+    jump,
+    getState: ()=>({running,paused,score,best,pipes,player})
+  };
+
+})();
 </script>
 </body>
 </html>
